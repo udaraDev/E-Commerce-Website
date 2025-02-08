@@ -20,14 +20,12 @@ const loginUser = async (req, res) => {
 
     // Check if password is correct
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.json({ success: false, message: "Invalid credentials" });
+    if (isMatch) {
+      const token = createToken(user._id);
+      res.json({ success: true, token });
+    } else {
+      res.json({ success: false, message: "Invalid credentials" });
     }
-
-    // Create token
-    const token = createToken(user._id);
-
-    res.json({ success: true, user, token });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -83,7 +81,29 @@ const registerUser = async (req, res) => {
 
 // Route for admin login
 const adminLogin = async (req, res) => {
-  
+  try {
+    const { email, password } = req.body;
+
+    // Check if admin exists
+    const admin = await userModel.findOne({ email, role: 'admin' });
+    if (!admin) {
+      return res.json({ success: false, message: "Admin not found" });
+    }
+
+    // Check if password is correct
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
+
+    // Create token
+    const token = createToken(admin._id);
+
+    res.json({ success: true, admin, token });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
 
 export { loginUser, registerUser, adminLogin };
