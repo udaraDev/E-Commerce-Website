@@ -84,22 +84,15 @@ const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if admin exists
-    const admin = await userModel.findOne({ email, role: 'admin' });
-    if (!admin) {
-      return res.json({ success: false, message: "Admin not found" });
+    if (
+      email === process.env.ADMIN_EMAIL &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
+      const token = jwt.sign(email + password, process.env.JWT_SECRET);
+      return res.json({ success: true, token });
+    } else {
+      res.json({ success: false, message: "Invalid credentials" });
     }
-
-    // Check if password is correct
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      return res.json({ success: false, message: "Invalid credentials" });
-    }
-
-    // Create token
-    const token = createToken(admin._id);
-
-    res.json({ success: true, admin, token });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
